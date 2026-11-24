@@ -1,38 +1,57 @@
 # SpeechApp
 
-A Windows desktop application for recording speech and converting it to text, and for reading typed text aloud. Transcription uses a local multilingual Whisper model and playback uses installed Windows voices.
+SpeechApp is a C# Windows Forms app for transcribing microphone recordings and reading text aloud. Both operations run locally.
 
 ## Features
 
-- Record up to two minutes through the default microphone, then stop to transcribe in Turkish or English.
-- Cancel transcription, clear the transcript, or select and copy the result.
-- Read typed text aloud with an installed voice. Pause, resume, stop, or clear the input.
-- Follow the current activity and any errors below each panel.
+- **Speech to Text** records up to two minutes from the default microphone and transcribes the recording in Turkish or English. You can cancel transcription, copy the transcript, or clear it.
+- **Text to Speech** reads typed text with an installed Windows voice. You can choose a voice, pause, resume, stop, or clear the input.
+- Each tool has its own tab. Switching tabs preserves both text fields and keeps the current audio activity visible at the top.
 
 ## Requirements
 
 - Windows x64 and the .NET 10 SDK.
 - [Microsoft Visual C++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) for the native Whisper runtime.
-- A default recording device for microphone input and an audio output device for playback.
-- A supported Windows voice for each language you want to read aloud.
-- A local GGML Whisper model for transcription. Use the multilingual model, such as `ggml-base.bin`.
-
-The app uses Windows Forms, [System.Speech](https://www.nuget.org/packages/System.Speech/10.0.15), and [Whisper.net with its CPU runtime](https://github.com/sandrohanea/whisper.net).
+- A working default microphone for recording and an audio output device for playback.
+- At least one compatible Windows speech voice for playback. The **Voice** list shows the voices available to the app.
 
 ## Run from source
 
-In PowerShell at the repository root, run:
+From the repository root, run:
 
 ```powershell
 dotnet run --project src/SpeechApp/SpeechApp.csproj
 ```
 
-Text-to-speech is available as soon as the app finds an installed voice. To enable transcription, download the [multilingual Whisper base model](https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin) (about 141 MiB). Use **Choose model** to open the downloaded file, or save it as `models/ggml-base.bin` and launch the app from the repository root. The model directory is ignored by Git.
+To enable transcription, download the [multilingual Whisper base model](https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin) (about 141 MiB). Select it with **Choose model**, or save it as `models/ggml-base.bin` before launching from the repository root. Text-to-speech works with an installed voice even before a model is selected.
 
-## Using the app
+## Use the app
 
-1. In **Speech to Text**, choose Turkish or English, click **Start recording**, and speak into the default microphone. Grant microphone access in Windows if needed. Click **Stop** to start transcription, or let it start automatically at the time limit.
-2. Review the result in the transcript. Choose **Cancel** while transcription is running or **Clear** to remove previous results when idle.
-3. In **Text to Speech**, type some text, choose an installed voice, and click **Read aloud**. Use **Pause**, **Resume**, or **Stop** to control playback.
+1. In **Speech to Text**, choose **Turkish** or **English**, select **Start recording**, and speak into the default microphone. Select **Stop** to transcribe immediately, or wait for the recording limit. The result appears in **Transcript**.
+2. In **Text to Speech**, enter text in **Text to read**, choose a voice, and select **Read aloud**. Use **Pause**, **Resume**, and **Stop** to control playback.
 
-The app runs one audio operation at a time. Recording is held in memory, and the model runs on your computer. Accuracy varies with the model, language, and recording quality.
+## Screenshots
+
+### Speech to Text
+
+![Speech to Text tab with the Turkish language selected and a sample transcript](docs/screenshots/speech-to-text.png)
+
+### Text to Speech
+
+![Text to Speech tab with a Windows voice selected and sample text ready to read](docs/screenshots/text-to-speech.png)
+
+## Implementation
+
+- **Windows Forms** provides the two workspaces, input controls, and operation feedback.
+- **Windows WinMM** captures 16 kHz mono audio in memory.
+- **Whisper.net** and its CPU runtime transcribe the captured audio using a local GGML model.
+- **System.Speech** reads text with installed Windows voices.
+
+The form and entry point are in `src/SpeechApp/`. Microphone capture, transcription, and playback are in `src/SpeechApp/Audio/`.
+
+## Limitations and troubleshooting
+
+- Speech recognition starts after recording ends. Accuracy and processing time depend on the model, recording quality, and CPU.
+- One audio operation can run at a time. Recordings are held in memory and discarded after processing.
+- If recording fails, check the default microphone and allow desktop apps to access it in Windows microphone settings.
+- If no voice appears, install a compatible Windows speech voice and restart the app. If transcription fails to start, check that the selected model is a multilingual GGML file and that the x64 runtime prerequisites are installed.
