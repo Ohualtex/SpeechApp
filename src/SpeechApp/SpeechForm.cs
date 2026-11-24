@@ -41,7 +41,7 @@ internal sealed partial class SpeechForm : Form
         source.TextChanged += (_, _) => RefreshControls();
         transcript.TextChanged += (_, _) => RefreshControls();
         captureTimer.Tick += async (_, _) => await CaptureTickAsync();
-        Shown += (_, _) => { InitializeVoices(); source.Focus(); };
+        Shown += (_, _) => InitializeVoices();
         FormClosing += (_, e) =>
         {
             if (transcription is null) return;
@@ -263,6 +263,16 @@ internal sealed partial class SpeechForm : Form
     private void RefreshControls()
     {
         bool idle = activity == Activity.Idle;
+        activityStatus.Text = activity switch
+        {
+            Activity.Recording => "Recording",
+            Activity.Transcribing => "Transcribing",
+            Activity.Cancelling => "Cancelling transcription",
+            Activity.Speaking => "Reading aloud",
+            Activity.Paused => "Reading paused",
+            Activity.Stopping => "Stopping playback",
+            _ => string.Empty
+        };
         chooseModel.Enabled = language.Enabled = idle;
         record.Enabled = idle && modelPath is not null;
         modelStatus.Text = modelPath is null ? "Choose a local multilingual model to begin." : Path.GetFileName(modelPath);

@@ -19,5 +19,6 @@ internal sealed partial class SpeechForm : Form
     private readonly Label modelStatus = new() { AutoEllipsis = true };
     private readonly Label speechStatus = new() { AutoEllipsis = true };
     private readonly Label recognitionStatus = new() { AutoEllipsis = true };
+    private readonly Label activityStatus = new() { AutoSize = true, AccessibleName = "Current audio activity" };
     private readonly ToolTip tips = new();
 }
