@@ -6,6 +6,9 @@ internal static class Program
     private static void Main()
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new SpeechForm());
+        using Stream iconResource = typeof(Program).Assembly.GetManifestResourceStream("SpeechApp.ico")!;
+        using Icon icon = new(iconResource);
+        using SpeechForm form = new() { Icon = icon };
+        Application.Run(form);
     }
 }
