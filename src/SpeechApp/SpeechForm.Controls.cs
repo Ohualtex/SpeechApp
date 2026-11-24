@@ -10,12 +10,12 @@ internal sealed partial class SpeechForm : Form
     private readonly RichTextBox transcript = new() { AccessibleName = "Transcript", DetectUrls = false, ReadOnly = true };
     private readonly OptionSelector voices = new() { DropDownStyle = ComboBoxStyle.DropDownList, AccessibleName = "Reading voice" };
     private readonly OptionSelector language = new() { DropDownStyle = ComboBoxStyle.DropDownList, AccessibleName = "Recognition language" };
-    private readonly ActionButton speak = new() { Text = "Read aloud" };
+    private readonly ActionButton speak = new(ActionStyle.Primary) { Text = "Read aloud" };
     private readonly ActionButton pause = new() { Text = "Pause" };
-    private readonly ActionButton stopSpeech = new() { Text = "Stop" };
+    private readonly ActionButton stopSpeech = new(ActionStyle.Stop) { Text = "Stop" };
     private readonly ActionButton clearSource = new() { Text = "Clear" };
-    private readonly ActionButton record = new() { Text = "Start recording" };
-    private readonly ActionButton stopRecording = new() { Text = "Stop" };
+    private readonly ActionButton record = new(ActionStyle.Primary) { Text = "Start recording" };
+    private readonly ActionButton stopRecording = new(ActionStyle.Stop) { Text = "Stop" };
     private readonly ActionButton clearTranscript = new() { Text = "Clear" };
     private readonly ActionButton chooseModel = new() { Text = "Choose model..." };
     private readonly Label modelStatus = new() { AutoEllipsis = true };

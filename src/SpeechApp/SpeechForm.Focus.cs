@@ -2,6 +2,8 @@ namespace SpeechApp;
 
 internal sealed partial class SpeechForm
 {
+    private static readonly Color FocusTint = Color.FromArgb(226, 218, 248);
+
     protected override bool ProcessDialogKey(Keys keyData)
     {
         bool tabShortcut = keyData is (Keys.Control | Keys.Tab) or (Keys.Control | Keys.Shift | Keys.Tab);
@@ -15,18 +17,50 @@ internal sealed partial class SpeechForm
         return true;
     }
 
+    private enum ActionStyle { Secondary, Primary, Stop }
 
     private sealed class ActionButton : Button
     {
+        private readonly Color readyColor;
+        private readonly Color focusColor;
+        private readonly bool filled;
+
+        public ActionButton(ActionStyle style = ActionStyle.Secondary)
+        {
+            filled = style != ActionStyle.Secondary;
+            (readyColor, focusColor, Color hover, Color pressed) = style switch
+            {
+                ActionStyle.Primary => (Accent, Color.FromArgb(61, 49, 141), Color.FromArgb(67, 56, 153), Color.FromArgb(54, 44, 131)),
+                ActionStyle.Stop => (Color.FromArgb(173, 48, 70), Color.FromArgb(133, 32, 51), Color.FromArgb(151, 39, 59), Color.FromArgb(119, 29, 47)),
+                _ => (Surface, FocusTint, Color.FromArgb(239, 235, 247), Color.FromArgb(228, 222, 240))
+            };
+
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            Padding = new Padding(12, 5, 12, 5);
+            Margin = new Padding(0, 0, 8, 0);
+            MinimumSize = new Size(68, 36);
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.MouseOverBackColor = hover;
+            FlatAppearance.MouseDownBackColor = pressed;
+            UseVisualStyleBackColor = false;
+
+            EnabledChanged += (_, _) => UpdateAppearance();
+            GotFocus += (_, _) => UpdateAppearance();
+            LostFocus += (_, _) => UpdateAppearance();
+            ChangeUICues += (_, _) => UpdateAppearance();
+            UpdateAppearance();
+        }
+
         protected override bool ShowFocusCues => false;
 
-        protected override void OnPaint(PaintEventArgs e)
+        private void UpdateAppearance()
         {
-            base.OnPaint(e);
-            if (!Focused || !base.ShowFocusCues) return;
-
-            using var focus = new Pen(BackColor == Accent ? Color.White : Accent);
-            e.Graphics.DrawRectangle(focus, Rectangle.Inflate(ClientRectangle, -3, -3));
+            bool keyboardFocus = Enabled && Focused && base.ShowFocusCues;
+            BackColor = Enabled ? (keyboardFocus ? focusColor : readyColor) : Color.FromArgb(238, 235, 242);
+            ForeColor = Enabled ? (filled ? Color.White : Ink) : Color.FromArgb(122, 113, 133);
+            FlatAppearance.BorderSize = Enabled && !filled ? 1 : 0;
+            FlatAppearance.BorderColor = Border;
         }
     }
 
@@ -38,7 +72,9 @@ internal sealed partial class SpeechForm
         {
             bool field = (e.State & DrawItemState.ComboBoxEdit) != 0;
             bool highlighted = !field && (e.State & DrawItemState.Selected) != 0;
-            using var background = new SolidBrush(highlighted ? SystemColors.Highlight : BackColor);
+            bool keyboardFocus = field && Focused && ShowFocusCues;
+            Color fill = highlighted ? SystemColors.Highlight : keyboardFocus ? FocusTint : BackColor;
+            using var background = new SolidBrush(fill);
             e.Graphics.FillRectangle(background, e.Bounds);
             if (e.Index >= 0)
             {
@@ -47,12 +83,6 @@ internal sealed partial class SpeechForm
                 TextRenderer.DrawText(e.Graphics, GetItemText(Items[e.Index]), Font, textBounds, ink,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis |
                     TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
-            }
-
-            if (field && Focused && ShowFocusCues)
-            {
-                using var focus = new Pen(Accent);
-                e.Graphics.DrawRectangle(focus, Rectangle.Inflate(e.Bounds, -1, -1));
             }
         }
     }
@@ -74,9 +104,19 @@ internal sealed partial class SpeechForm
             Size = new Size(162, 38);
             Margin = Padding.Empty;
             TextAlign = ContentAlignment.MiddleCenter;
+            GotFocus += (_, _) => UpdateFocusTint();
+            LostFocus += (_, _) => UpdateFocusTint();
+            ChangeUICues += (_, _) => UpdateFocusTint();
         }
 
         protected override bool ShowFocusCues => false;
+
+        private void UpdateFocusTint()
+        {
+            bool keyboardFocus = Focused && base.ShowFocusCues;
+            BackColor = keyboardFocus ? FocusTint : Canvas;
+            FlatAppearance.CheckedBackColor = keyboardFocus ? FocusTint : Surface;
+        }
 
         protected override void OnCheckedChanged(EventArgs e)
         {
@@ -88,17 +128,10 @@ internal sealed partial class SpeechForm
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            if (Checked)
-            {
-                using var underline = new SolidBrush(Accent);
-                e.Graphics.FillRectangle(underline, 0, Height - 3, Width, 3);
-            }
+            if (!Checked) return;
 
-            if (Focused && base.ShowFocusCues)
-            {
-                using var focus = new Pen(Accent);
-                e.Graphics.DrawRectangle(focus, Rectangle.Inflate(ClientRectangle, -3, -4));
-            }
+            using var underline = new SolidBrush(Accent);
+            e.Graphics.FillRectangle(underline, 0, Height - 3, Width, 3);
         }
     }
 }

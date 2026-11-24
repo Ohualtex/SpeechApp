@@ -38,11 +38,6 @@ internal sealed partial class SpeechForm
         header.Controls.Add(activityStatus, 1, 0);
         root.Controls.Add(header, 0, 0);
 
-        StyleButton(record, primary: true);
-        StyleButton(speak, primary: true);
-        foreach (Button button in new[] { chooseModel, stopRecording, clearTranscript, pause, stopSpeech, clearSource })
-            StyleButton(button, primary: false);
-
         var tabs = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
@@ -152,22 +147,4 @@ internal sealed partial class SpeechForm
 
     private static Label Caption(string text) =>
         new() { Text = text, Font = LabelFont, AutoSize = true, Margin = new Padding(0, 0, 0, 8) };
-
-    private static void StyleButton(Button button, bool primary)
-    {
-        button.AutoSize = true;
-        button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        button.Padding = new Padding(12, 5, 12, 5);
-        button.Margin = new Padding(0, 0, 8, 0);
-        button.MinimumSize = new Size(68, 36);
-        button.FlatStyle = FlatStyle.Flat;
-        button.FlatAppearance.BorderSize = primary ? 0 : 1;
-        button.FlatAppearance.BorderColor = Border;
-        button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(67, 56, 153) : Color.FromArgb(239, 235, 247);
-        button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(54, 44, 131) : Color.FromArgb(228, 222, 240);
-        button.UseVisualStyleBackColor = false;
-        button.BackColor = primary ? Accent : Surface;
-        button.ForeColor = primary ? Color.White : Ink;
-        button.EnabledChanged += (_, _) => button.BackColor = button.Enabled && primary ? Accent : button.Enabled ? Surface : Canvas;
-    }
 }
