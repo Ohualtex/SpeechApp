@@ -19,9 +19,10 @@ internal sealed partial class SpeechForm
         ForeColor = Ink;
         var root = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(24, 14, 24, 20)
+            Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(24, 14, 24, 20)
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -42,45 +43,28 @@ internal sealed partial class SpeechForm
         foreach (Button button in new[] { chooseModel, stopRecording, clearTranscript, pause, stopSpeech, clearSource })
             StyleButton(button, primary: false);
 
-        var tabs = new TabControl
+        var tabs = new FlowLayoutPanel
         {
-            Dock = DockStyle.Fill, Margin = Padding.Empty, DrawMode = TabDrawMode.OwnerDrawFixed,
-            SizeMode = TabSizeMode.Fixed, ItemSize = new Size(162, 38), AccessibleName = "Speech tools"
+            Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false, Margin = Padding.Empty, AccessibleName = "Speech tools"
         };
-        tabs.DrawItem += DrawTab;
-        tabs.SelectedIndexChanged += (_, _) => tabs.Invalidate();
-        tabs.GotFocus += (_, _) => tabs.Invalidate();
-        tabs.LostFocus += (_, _) => tabs.Invalidate();
-        tabs.TabPages.Add(new TabPage("Speech to Text") { BackColor = Canvas });
-        tabs.TabPages.Add(new TabPage("Text to Speech") { BackColor = Canvas });
-        tabs.TabPages[0].Controls.Add(BuildWorkspace("Transcript", transcript, recognitionStatus,
-            BuildOptions("Language", language, includeModel: true), record, stopRecording, clearTranscript));
-        tabs.TabPages[1].Controls.Add(BuildWorkspace("Text to read", source, speechStatus,
-            BuildOptions("Voice", voices, includeModel: false), speak, pause, stopSpeech, clearSource));
+        tabs.Controls.AddRange([recognitionTab, playbackTab]);
         root.Controls.Add(tabs, 0, 1);
+
+        var body = new Panel { Dock = DockStyle.Fill, BackColor = Surface, Margin = Padding.Empty };
+        Control recognition = BuildWorkspace("Transcript", transcript, recognitionStatus,
+            BuildOptions("Language", language, includeModel: true), record, stopRecording, clearTranscript);
+        Control playback = BuildWorkspace("Text to read", source, speechStatus,
+            BuildOptions("Voice", voices, includeModel: false), speak, pause, stopSpeech, clearSource);
+        body.Controls.AddRange([recognition, playback]);
+        recognitionTab.CheckedChanged += (_, _) => recognition.Visible = recognitionTab.Checked;
+        playbackTab.CheckedChanged += (_, _) => playback.Visible = playbackTab.Checked;
+        playback.Hide();
+        recognitionTab.Checked = true;
+        root.Controls.Add(body, 0, 2);
         return root;
     }
 
-    private static void DrawTab(object? sender, DrawItemEventArgs e)
-    {
-        var tabs = (TabControl)sender!;
-        bool selected = tabs.SelectedIndex == e.Index;
-        using var background = new SolidBrush(selected ? Surface : Canvas);
-        e.Graphics.FillRectangle(background, e.Bounds);
-        var labelBounds = Rectangle.Inflate(e.Bounds, -7, -4);
-        TextRenderer.DrawText(e.Graphics, tabs.TabPages[e.Index].Text, selected ? LabelFont : tabs.Font,
-            labelBounds, selected ? Accent : Muted, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        if (selected)
-        {
-            using var accent = new SolidBrush(Accent);
-            e.Graphics.FillRectangle(accent, e.Bounds.Left, e.Bounds.Bottom - 3, e.Bounds.Width, 3);
-            if (tabs.Focused && (e.State & DrawItemState.Focus) != 0)
-            {
-                using var focus = new Pen(Border);
-                e.Graphics.DrawRectangle(focus, labelBounds);
-            }
-        }
-    }
 
     private Control BuildOptions(string label, ComboBox selector, bool includeModel)
     {
